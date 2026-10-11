@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b2820">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Carioca">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Carioca</title>
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;600;700&display=swap">
+<style>
+/* Layout: una sola columna como mesa de once — rivales arriba, la mesa al centro, tu mano y tus botones abajo. Tema único: paño verde. */
+:root{
+  --felt:#164536; --felt-deep:#0b2820; --line:rgba(243,239,226,.16); --shade:rgba(0,0,0,.2);
+  --ink:#f3efe2; --muted:#a9c3b5; --brass:#e3bc5d; --brass-ink:#2a2108;
+  --card:#fbf8f1; --card-ink:#1f2522; --card-red:#c0302a; --back:#8a2a2e; --back-2:#a3393c;
+  --alert:#ffab9c; --ok:#a6e6bd;
+  --display:'Young Serif', Georgia, 'Times New Roman', serif;
+  --body:'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --cw:clamp(40px, 12.4vw, 58px);
+  color-scheme:dark;
+}
+html{background:var(--felt-deep)}
+body{
+  color:var(--ink); font-family:var(--body); font-size:15px; line-height:1.4; min-height:100vh;
+  background-color:var(--felt-deep);
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255,255,255,.018) 0 2px, transparent 2px 6px),
+    radial-gradient(120% 70% at 50% 0%, var(--felt) 0%, var(--felt-deep) 100%);
+  background-attachment:fixed;
+}
+.wrap{max-width:720px; margin:0 auto; padding-inline:16px; padding-block:12px 32px; display:grid; gap:14px}
+.bar{display:flex; align-items:center; justify-content:space-between; gap:12px}
+.brand{font-family:var(--display); font-size:26px; margin:0; letter-spacing:.01em; color:var(--brass)}
+h1,h2,h3{text-wrap:balance}
+button{font:inherit; color:inherit}
+.btn{font:600 14px/1 var(--body); padding:11px 15px; border-radius:999px; border:1.5px solid var(--brass);
+  background:transparent; color:var(--ink); cursor:pointer; min-height:42px}
+.btn.primary{background:var(--brass); color:var(--brass-ink)}
+.btn.ghost{border-color:var(--line)}
+.btn.small{min-height:32px; padding:7px 11px; font-size:13px}
+.btn:disabled{opacity:.33; cursor:not-allowed}
+.btn:focus-visible,.card:focus-visible,.pile:focus-visible,.meld:focus-visible{outline:3px solid var(--brass); outline-offset:2px}
+.rules{border:1px solid var(--line); border-radius:12px; padding:4px 16px 12px; background:var(--shade); font-size:14px}
+.rules h3{font-family:var(--display); font-weight:400; font-size:17px; margin:12px 0 4px}
+.rules ul{margin:0; padding-left:18px; display:grid; gap:4px}
+.rules p{margin:6px 0}
+
+/* inicio */
+.start{display:grid; gap:16px; max-width:460px; margin:0 auto; width:100%}
+.lede{color:var(--muted); margin:0; max-width:60ch}
+.field{display:grid; gap:6px}
+.lbl{font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted)}
+input[type=text]{font:inherit; padding:10px 12px; border-radius:10px; border:1.5px solid var(--line); background:var(--shade); color:var(--ink)}
+input[type=text]:focus{outline:none; border-color:var(--brass)}
+.seg{display:flex; gap:8px; flex-wrap:wrap}
+.seg .btn[aria-pressed="true"]{background:var(--brass); color:var(--brass-ink)}
+.rounds{margin:0; padding:0; list-style:none; display:grid; gap:2px; counter-reset:r; font-size:14px}
+.rounds li{counter-increment:r; display:flex; gap:10px; padding:6px 0; border-bottom:1px solid var(--line)}
+.rounds li::before{content:counter(r); font-family:var(--display); color:var(--brass); width:1.6em; text-align:right; font-variant-numeric:tabular-nums}
+
+/* juego */
+.topline{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+.round{font-family:var(--display); font-size:20px}
+.round span{color:var(--muted); font-size:15px}
+.req{font-weight:700; color:var(--brass-ink); background:var(--brass); padding:5px 12px; border-radius:999px; font-size:14px}
+.rivals{display:grid; grid-template-columns:repeat(auto-fit, minmax(78px, 1fr)); gap:6px}
+.rival{border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:var(--shade); display:grid; gap:2px; min-width:0}
+.rival.on{border-color:var(--brass); box-shadow:inset 0 0 0 1px var(--brass)}
+.rival .rn{font-weight:700; font-size:14px; line-height:1.2}
+.rival .rm{font-size:13px; color:var(--muted); display:flex; gap:6px; align-items:center; flex-wrap:wrap}
+.pill{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--brass-ink); background:var(--ok); padding:1px 6px; border-radius:999px}
+.mesa{border:1.5px dashed var(--line); border-radius:14px; padding:10px; display:grid; gap:10px; min-height:64px}
+.mesa .empty{color:var(--muted); font-size:14px; align-self:center; text-align:center}
+.mowner{font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:4px}
+.mrow{display:flex; flex-wrap:wrap; gap:8px}
+.meld{display:flex; padding:5px 7px; border-radius:9px; border:1.5px solid transparent; background:var(--shade); cursor:pointer}
+.meld.target{border-color:var(--brass); box-shadow:0 0 14px rgba(227,188,93,.45)}
+.mini{width:26px; height:36px; border-radius:4px; background:var(--card); color:var(--card-ink); border:1px solid rgba(0,0,0,.35);
+  font-family:var(--display); font-size:12px; line-height:1.05; display:flex; flex-direction:column; align-items:flex-start; padding:3px 0 0 3px; flex:none}
+.mini + .mini{margin-left:-9px}
+.mini.red{color:var(--card-red)}
+.mini.jk{background:#f4e4b0; color:#6b4b00; align-items:center; padding-left:0; justify-content:center; font-size:14px}
+.center{display:grid; grid-template-columns:auto auto 1fr; gap:12px; align-items:center}
+.pile{border:none; background:none; padding:0; cursor:pointer; display:grid; gap:4px; justify-items:center; font-size:12px; color:var(--muted)}
+.pile:disabled{cursor:default}
+.pile.live .back,.pile.live .card,.pile.live .slot{box-shadow:0 0 0 2px var(--brass), 0 0 16px rgba(227,188,93,.5)}
+.back{width:var(--cw); height:calc(var(--cw)*1.42); border-radius:7px; border:3px solid var(--card);
+  background:repeating-linear-gradient(45deg, var(--back) 0 4px, var(--back-2) 4px 8px)}
+.slot{width:var(--cw); height:calc(var(--cw)*1.42); border-radius:7px; border:1.5px dashed var(--line)}
+.status{font-size:14px; color:var(--muted); min-width:0}
+.status .flash{display:block; color:var(--alert); margin-top:4px}
+.status .flash.ok{color:var(--ok)}
+.pending{border:1.5px solid var(--brass); border-radius:12px; padding:8px 10px; display:grid; gap:6px}
+.pg{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.pt{font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--brass); min-width:5.5em}
+.handhead{display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; font-size:14px; color:var(--muted)}
+.handhead b{color:var(--ink); font-variant-numeric:tabular-nums}
+.sorts{display:flex; gap:6px; align-items:center}
+.hand{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; padding-top:10px}
+.card{display:block; width:var(--cw); height:calc(var(--cw)*1.42); border-radius:7px; background:var(--card); color:var(--card-ink);
+  border:1px solid rgba(0,0,0,.3); box-shadow:0 2px 0 rgba(0,0,0,.28); position:relative; font-family:var(--display);
+  padding:0; cursor:pointer; transition:transform .12s ease; flex:none}
+.card .r{position:absolute; top:4px; left:5px; font-size:calc(var(--cw)*.34); line-height:1}
+.card .s1{position:absolute; top:calc(var(--cw)*.4); left:5px; font-size:calc(var(--cw)*.26); line-height:1}
+.card .s2{position:absolute; right:5px; bottom:4px; font-size:calc(var(--cw)*.52); line-height:1}
+.card.red{color:var(--card-red)}
+.card.joker{background:#f4e4b0; color:#6b4b00}
+.card.joker .r{font-size:calc(var(--cw)*.24); font-family:var(--body); font-weight:700}
+.card.sel{transform:translateY(-9px); box-shadow:0 0 0 3px var(--brass), 0 6px 10px rgba(0,0,0,.35)}
+.card.new::after{content:''; position:absolute; top:5px; right:5px; width:7px; height:7px; border-radius:50%; background:var(--back)}
+.actions{display:flex; flex-wrap:wrap; gap:8px; justify-content:center}
+.log{margin:0; padding:0; list-style:none; font-size:13px; color:var(--muted); display:grid; gap:2px; border-top:1px solid var(--line); padding-top:10px}
+.log li:first-child{color:var(--ink)}
+.overlay{position:fixed; inset:0; background:rgba(4,18,13,.72); display:grid; place-items:center; padding:16px; z-index:10}
+.sheet{background:var(--felt); border:1.5px solid var(--brass); border-radius:16px; padding:20px; width:100%; max-width:420px; display:grid; gap:12px}
+.sheet h2{font-family:var(--display); font-weight:400; margin:0; font-size:24px}
+.sheet p{margin:0; color:var(--muted)}
+.sheet table{width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums}
+.sheet th,.sheet td{padding:6px 4px; border-bottom:1px solid var(--line); text-align:right}
+.sheet th:first-child,.sheet td:first-child{text-align:left}
+.sheet th{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600}
+.sheet tr.best td{color:var(--brass); font-weight:700}
+@media (prefers-reduced-motion: reduce){ .card{transition:none} }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <h1 class="brand">Carioca</h1>
+    <button class="btn ghost small" id="rulesBtn" aria-expanded="false" aria-controls="rules">Reglas</button>
+  </header>
+  <section class="rules" id="rules" hidden>
+    <h3>Cómo se juega</h3>
+    <ul>
+      <li>Dos barajas inglesas y 4 comodines. Cada jugador recibe 12 cartas (13 en la escala sucia y la escala real).</li>
+      <li>En la primera vuelta de cada ronda nadie se puede bajar: todos roban y botan una vez.</li>
+      <li>En tu turno robas del mazo o tomas la carta de arriba del pozo, y terminas botando una carta.</li>
+      <li>Para bajarte necesitas exactamente lo que pide la ronda. Puedes bajarte cuando ya robaste. Cada trío se baja con 3 cartas y cada escala con 4; el resto se agrega en turnos siguientes.</li>
+      <li><b>Trío:</b> 3 o más cartas del mismo número. <b>Escala:</b> 4 o más cartas seguidas del mismo palo. Las escalas pueden dar la vuelta (Q-K-A-2 vale), hasta 13 cartas.</li>
+      <li>Máximo un comodín por juego, y en un trío tiene que haber al menos 2 cartas naturales.</li>
+      <li>Una vez bajado, puedes agregar cartas a tus juegos o a los de los demás. Quien no se ha bajado no puede agregar, y en el turno en que te bajas no puedes agregar a ningún juego: eso se hace desde el turno siguiente.</li>
+      <li>No hay compra. Tampoco puedes botar la misma carta que tomaste del pozo.</li>
+      <li>La ronda termina cuando alguien se queda sin cartas (botando la última o bajándola).</li>
+      <li><b>Escala sucia:</b> A a K completa con palos mezclados. <b>Escala real:</b> A a K del mismo palo. Ninguna de las dos admite comodines.</li>
+    </ul>
+    <h3>Puntaje</h3>
+    <p>Al cerrar la ronda, cada uno suma lo que le quedó en la mano: 2 a 10 su valor, J-Q-K 10, As 20 y comodín 30. Después de las 10 rondas gana quien tenga menos puntos.</p>
+  </section>
+  <main id="app"></main>
+</div>
+
+<script>
+const SUITS=['♠','♥','♦','♣'];
+const RED=new Set(['♥','♦']);
+const ROUNDS=[{t:2,e:0},{t:1,e:1},{t:0,e:2},{t:3,e:0},{t:2,e:1},{t:1,e:2},{t:4,e:0},{t:0,e:3},{x:'sucia'},{x:'real'}];
+const BOTN=['Tía Marta','Don Lucho','Primo Seba','Abuela Rosa','Tío Pato','Prima Coni','Don Hernán','Tía Chela','Primo Nacho','Abuelo Tito',
+  'Tía Carmen','Don Manolo','Prima Javi','Tío Beto','Señora Gladys','Primo Matías','Tía Pili','Don Raúl','Abuela Nena','Tío Cucho',
+  'Prima Fran','Don Óscar','Tía Ximena','Primo Benja','Vecina Inés','Tío Jaime','Abuela Lucha','Prima Cata','Don Checho','Tía Moni'];
+const KEY='carioca-v1';
+const TEXT='︎';
+const $app=document.getElementById('app');
+
+let G=null, timer=null, flash=null, setup={bots:3,name:''};
+
+/* ---------- utilidades ---------- */
+const rn=r=>({1:'A',11:'J',12:'Q',13:'K'}[r]||String(r));
+const pts=c=>c.j?30:c.r===1?20:c.r>=11?10:c.r;
+const sym=s=>s+TEXT;
+const cardTxt=c=>c.j?'un comodín':rn(c.r)+sym(c.s);
+const typeName=t=>({trio:'trío',escala:'escala',sucia:'escala sucia',real:'escala real'}[t]);
+function reqLabel(q){
+  if(q.x==='sucia') return 'Escala sucia';
+  if(q.x==='real') return 'Escala real';
+  const p=[]; if(q.t) p.push(q.t+(q.t>1?' tríos':' trío')); if(q.e) p.push(q.e+(q.e>1?' escalas':' escala'));
+  return p.join(' + ');
+}
+const req=()=>ROUNDS[G.round];
+const cur=()=>G.players[G.turn];
+const total=p=>p.scores.reduce((a,b)=>a+b,0);
+const handPts=p=>p.hand.reduce((a,c)=>a+pts(c),0);
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function buildDeck(){
+  const d=[]; let id=0;
+  for(let k=0;k<2;k++) for(const s of SUITS) for(let r=1;r<=13;r++) d.push({id:id++,r,s,j:false});
+  for(let k=0;k<4;k++) d.push({id:id++,r:0,s:null,j:true});
+  return shuffle(d);
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+
+/* ---------- validación de juegos ---------- */
+function validTrio(cs){
+  if(cs.length<3) return null;
+  const nat=cs.filter(c=>!c.j), jk=cs.filter(c=>c.j);
+  if(jk.length>1||nat.length<2) return null;
+  if(nat.some(c=>c.r!==nat[0].r)) return null;
+  return [...nat.sort((a,b)=>SUITS.indexOf(a.s)-SUITS.indexOf(b.s)),...jk];
+}
+function validEscala(cs){
+  const L=cs.length; if(L<4||L>13) return null;
+  const nat=cs.filter(c=>!c.j), jk=cs.filter(c=>c.j);
+  if(jk.length>1||nat.length<3) return null;
+  const s=nat[0].s; if(nat.some(c=>c.s!==s)) return null;
+  if(new Set(nat.map(c=>c.r)).size!==nat.length) return null;
+  // escalas circulares: ...Q-K-A-2... vale
+  let start=null, fallback=null;
+  for(let st=1;st<=13;st++){
+    const pos=nat.map(c=>(c.r-st+13)%13);
+    if(Math.max(...pos)>=L) continue;
+    if(fallback===null) fallback=st;
+    if(pos.includes(0)){ start=st; break; }
+  }
+  if(start===null) start=fallback;
+  if(start===null) return null;
+  const out=[]; let ji=0;
+  for(let i=0;i<L;i++){ const r=((start-1+i)%13)+1; const f=nat.find(c=>c.r===r); out.push(f?f:jk[ji++]); }
+  return out;
+}
+function validLong(cs,real){
+  if(cs.length!==13||cs.some(c=>c.j)) return null;
+  if(new Set(cs.map(c=>c.r)).size!==13) return null;
+  if(real&&cs.some(c=>c.s!==cs[0].s)) return null;
+  return [...cs].sort((a,b)=>a.r-b.r);
+}
+function validate(type,cs){
+  if(type==='trio') return validTrio(cs);
+  if(type==='escala') return validEscala(cs);
+  if(type==='sucia') return validLong(cs,false);
+  if(type==='real') return validLong(cs,true);
+  return null;
+}
+
+/* ---------- búsqueda de bajada (bots y botón Ayuda) ---------- */
+function findLayDown(hand,q){
+  if(q.x){
+    const suits=q.x==='real'?SUITS:[null];
+    for(const s of suits){
+      const used=[]; let ok=true;
+      for(let r=1;r<=13;r++){ const c=hand.find(k=>!k.j&&k.r===r&&(s===null||k.s===s)); if(!c){ok=false;break;} used.push(c); }
+      if(ok) return [{type:q.x,cards:used}];
+    }
+    return null;
+  }
+  const nat=hand.filter(c=>!c.j);
+  const byR={}; nat.forEach(c=>{byR[c.r]=(byR[c.r]||0)+1;});
+  const tc=[];
+  for(const r in byR) if(byR[r]>=3) tc.push({r:+r,n:3,j:0});
+  for(const r in byR) if(byR[r]>=2) tc.push({r:+r,n:2,j:1});
+  const ec=[];
+  for(const s of SUITS){
+    const have=new Set(nat.filter(c=>c.s===s).map(c=>c.r));
+    for(let st=1;st<=13;st++){
+      let miss=0;
+      for(let len=1; len<=4; len++){
+        const v=((st+len-2)%13)+1; if(!have.has(v)) miss++;
+        if(miss>1) break;
+        if(len===4) ec.push({s,st,len,j:miss});
+      }
+    }
+  }
+  ec.sort((a,b)=>a.j-b.j);
+  let nodes=0;
+  function allocT(c,pool){
+    const nat=pool.filter(x=>!x.j&&x.r===c.r).slice(0,c.n); if(nat.length<c.n) return null;
+    const cards=[...nat];
+    if(c.j){ const jk=pool.find(x=>x.j); if(!jk) return null; cards.push(jk); }
+    const ids=new Set(cards.map(x=>x.id));
+    return {cards:validTrio(cards), pool:pool.filter(x=>!ids.has(x.id))};
+  }
+  function allocE(c,pool){
+    const used=new Set(), cards=[]; let miss=0;
+    for(let v=c.st; v<c.st+c.len; v++){
+      const r=((v-1)%13)+1;
+      const k=pool.find(x=>!x.j&&x.s===c.s&&x.r===r&&!used.has(x.id));
+      if(k){used.add(k.id);cards.push(k);} else miss++;
+    }
+    if(miss>1) return null;
+    if(miss===1){ const jk=pool.find(x=>x.j); if(!jk) return null; used.add(jk.id); cards.push(jk); }
+    const v=validEscala(cards); if(!v) return null;
+    return {cards:v, pool:pool.filter(x=>!used.has(x.id))};
+  }
+  function dfs(nt,ne,pool,ti,ei,acc){
+    if(++nodes>60000) return null;
+    if(nt===0&&ne===0) return acc;
+    if(nt>0){
+      for(let i=ti;i<tc.length;i++){ const a=allocT(tc[i],pool); if(!a) continue;
+        const r=dfs(nt-1,ne,a.pool,i,ei,[...acc,{type:'trio',cards:a.cards}]); if(r) return r; }
+      return null;
+    }
+    for(let i=ei;i<ec.length;i++){ const a=allocE(ec[i],pool); if(!a) continue;
+      const r=dfs(0,ne-1,a.pool,ti,i,[...acc,{type:'escala',cards:a.cards}]); if(r) return r; }
+    return null;
+  }
+  const res=dfs(q.t,q.e,hand.slice(),0,0,[]);
+  if(!res) return null;
+  return res;
+}
+
+/* ---------- criterio de los bots ---------- */
+const vals1=r=>r===1?[1,14]:[r];
+function bestSuit(hand){
+  let best=SUITS[0], bn=-1;
+  const off=G?G.turn%4:0;
+  for(const s of [...SUITS.slice(off),...SUITS.slice(0,off)]){ const n=new Set(hand.filter(c=>!c.j&&c.s===s).map(c=>c.r)).size; if(n>bn){bn=n;best=s;} }
+  return best;
+}
+function useful(c,hand,q){
+  if(c.j){
+    if(q.x) return -1;
+    const jk=hand.filter(k=>k.j).map(k=>k.id).sort((a,b)=>a-b);
+    return jk.indexOf(c.id)<q.t+q.e?1000:1;
+  }
+  const others=hand.filter(k=>k.id!==c.id&&!k.j);
+  if(q.x==='sucia') return others.some(k=>k.r===c.r&&k.id<c.id)?0:10;
+  if(q.x==='real'){ if(c.s!==bestSuit(hand)) return 0; return others.some(k=>k.r===c.r&&k.s===c.s&&k.id<c.id)?0:10; }
+  let u=0;
+  if(q.t){
+    const same=others.filter(k=>k.r===c.r);
+    const before=same.filter(k=>k.id<c.id).length;
+    if(same.length&&before<3) u+=(3+2*Math.min(same.length,2))*(q.e?0.7:1);
+  }
+  if(q.e){
+    const twin=others.some(k=>k.r===c.r&&k.s===c.s&&k.id<c.id);
+    if(!twin||q.e>1){
+      const near=new Set();
+      others.filter(k=>k.s===c.s).forEach(k=>{ const d0=Math.abs(k.r-c.r), d=Math.min(d0,13-d0); if(d>=1&&d<=2) near.add(k.r); });
+      u+=near.size*2*(twin?0.5:1);
+    }
+  }
+  return u;
+}
+function canAddAny(card){
+  return G.melds.some(m=>(m.type==='trio'||m.type==='escala')&&validate(m.type,[...m.cards,card]));
+}
+function botWantsTop(p,top){
+  const q=req();
+  if(p.down) return canAddAny(top);
+  if(top.j) return useful(top,[...p.hand,top],q)>=1000;
+  const h2=[...p.hand,top];
+  if(!findLayDown(p.hand,q)&&findLayDown(h2,q)) return true;
+  const ut=useful(top,h2,q);
+  const worst=Math.min(...p.hand.filter(c=>!c.j).map(c=>useful(c,h2,q)));
+  return ut>=3&&ut>worst+1;
+}
+function chooseDiscard(p){
+  const q=req();
+  let cands=p.hand.filter(c=>c.id!==G.takenId); if(!cands.length) cands=p.hand.slice();
+  const nonJ=cands.filter(c=>!c.j||useful(c,p.hand,q)<1000); if(nonJ.length) cands=nonJ;
+  // no botar cartas que se pueden agregar a algún juego de la mesa (propio o ajeno)
+  const keep=c=>(!q.x&&canAddAny(c))?50:0;
+  let best=null, bs=Infinity;
+  if(p.down){ for(const c of cands){ const s=keep(c)-pts(c)*0.02; if(s<bs){bs=s;best=c;} } return best; }
+  for(const c of cands){ const s=useful(c,p.hand,q)+keep(c)-(q.x?Math.random()*0.5:pts(c)*0.02); if(s<bs){bs=s;best=c;} }
+  return best;
+}
+
+/* ---------- motor ---------- */
+function addLog(t){ G.log.unshift(t); G.log=G.log.slice(0,30); }
+function removeCard(p,id){ p.hand=p.hand.filter(c=>c.id!==id); }
+function sortHand(p,mode){
+  if(mode==='suit') p.hand.sort((a,b)=>(a.j-b.j)||(SUITS.indexOf(a.s)-SUITS.indexOf(b.s))||(a.r-b.r));
+  else p.hand.sort((a,b)=>(a.j-b.j)||(a.r-b.r)||(SUITS.indexOf(a.s)-SUITS.indexOf(b.s)));
+}
+function newGame(){
+  clearTimeout(timer);
+  const n=setup.bots;
+  G={players:[{name:(setup.name||'').trim()||'Tú',bot:false,hand:[],down:false,scores:[]},
+      ...shuffle(BOTN.slice()).slice(0,n).map(nm=>({name:nm,bot:true,hand:[],down:false,scores:[]}))],
+     round:0, dealer:Math.floor(Math.random()*(n+1)), log:[], sortMode:'rank'};
+  startRound();
+}
+function startRound(){
+  G.deck=buildDeck(); G.melds=[];
+  G.players.forEach(p=>{ p.hand=G.deck.splice(0,req().x?13:12); p.down=false; });
+  G.lap=0; G.justDown=false;
+  sortHand(G.players[0],G.sortMode);
+  G.discard=[G.deck.pop()];
+  G.turn=(G.dealer+1)%G.players.length;
+  G.phase='draw'; G.sel=[]; G.pending=[]; G.takenId=null; G.drawnId=null; G.winner=null;
+  addLog(`Ronda ${G.round+1}: ${reqLabel(req())}. Parte ${G.players[G.turn].name}.`);
+  go();
+}
+function go(){
+  render();
+  if(G&&(G.phase==='draw'||G.phase==='play')&&cur().bot){ clearTimeout(timer); timer=setTimeout(botDraw,600); }
+}
+function reshuffle(){
+  const top=G.discard.pop();
+  // el pozo se da vuelta tal cual: la primera carta botada queda arriba del mazo
+  G.deck=G.discard.slice().reverse(); G.discard=top?[top]:[];
+  addLog('Se acabó el mazo: se dio vuelta el pozo.');
+}
+function drawFrom(p,src){
+  let c;
+  if(src==='pozo'&&G.discard.length){ c=G.discard.pop(); G.takenId=c.id; }
+  else { if(!G.deck.length) reshuffle(); c=G.deck.pop();
+    if(!c&&G.discard.length){ c=G.discard.pop(); G.takenId=c.id; } }
+  if(!c) return null;
+  p.hand.push(c); G.drawnId=c.id; G.phase='play';
+  return c;
+}
+function layDown(p,groups){
+  const idx=G.players.indexOf(p);
+  for(const g of groups){ g.cards.forEach(c=>removeCard(p,c.id)); G.melds.push({owner:idx,type:g.type,cards:g.cards}); }
+  p.down=true;
+  G.justDown=true;
+}
+const canLay=()=>(G.lap||0)>=G.players.length;
+function discardCard(p,c){ removeCard(p,c.id); G.discard.push(c); }
+function nextTurn(){
+  G.turn=(G.turn+1)%G.players.length;
+  G.lap=(G.lap||0)+1;
+  G.justDown=false;
+  G.phase='draw'; G.takenId=null; G.drawnId=null; G.sel=[]; G.pending=[];
+  go();
+}
+function endRound(wi){
+  clearTimeout(timer);
+  G.winner=wi;
+  G.players.forEach(p=>p.scores.push(handPts(p)));
+  addLog(`${G.players[wi].name} cerró la ronda ${G.round+1}.`);
+  G.phase=G.round===ROUNDS.length-1?'gameEnd':'roundEnd';
+  G.sel=[]; G.pending=[];
+  render();
+}
+function nextRound(){ G.round++; G.dealer=(G.dealer+1)%G.players.length; startRound(); }
+
+/* bots */
+function botDraw(){
+  if(!G||!cur().bot) return;
+  const p=cur();
+  if(G.phase==='draw'){
+    const top=G.discard[G.discard.length-1];
+    const take=!!top&&botWantsTop(p,top);
+    const c=drawFrom(p,take?'pozo':'mazo');
+    addLog(take?`${p.name} tomó ${cardTxt(c)} del pozo.`:`${p.name} robó del mazo.`);
+    render();
+  }
+  timer=setTimeout(botPlay,650);
+}
+function botPlay(){
+  if(!G||!cur().bot||G.phase!=='play') return;
+  const p=cur(), q=req();
+  if(!p.down&&canLay()){
+    const g=findLayDown(p.hand,q);
+    if(g){ layDown(p,g); addLog(`${p.name} se bajó con ${g.map(x=>typeName(x.type)).join(', ')}.`); }
+  }
+  if(p.down){
+    let count=0, changed=true;
+    while(changed){
+      changed=false;
+      for(const c of [...p.hand].sort((a,b)=>a.j-b.j)){
+        for(const m of G.melds){
+          if(m.type!=='trio'&&m.type!=='escala') continue;
+          if(G.justDown) continue;
+          const v=validate(m.type,[...m.cards,c]);
+          if(v){ m.cards=v; removeCard(p,c.id); count++; changed=true; break; }
+        }
+        if(changed) break;
+      }
+    }
+    if(count) addLog(`${p.name} agregó ${count} carta${count>1?'s':''} a la mesa.`);
+  }
+  render();
+  if(!p.hand.length) return endRound(G.turn);
+  timer=setTimeout(botDiscard,650);
+}
+function botDiscard(){
+  if(!G||!cur().bot||G.phase!=='play') return;
+  const p=cur(), c=chooseDiscard(p);
+  discardCard(p,c); addLog(`${p.name} botó ${cardTxt(c)}.`);
+  if(!p.hand.length) return endRound(G.turn);
+  nextTurn();
+}
+
+/* ---------- jugador ---------- */
+const me=()=>G.players[0];
+const myTurn=()=>G.turn===0&&(G.phase==='draw'||G.phase==='play');
+const pendingIds=()=>new Set(G.pending.flatMap(g=>g.cards.map(c=>c.id)));
+const selCards=()=>G.sel.map(id=>me().hand.find(c=>c.id===id)).filter(Boolean);
+function say(t,ok){ flash={t,ok:!!ok}; }
+function pendingReady(){
+  const q=req(), P=G.pending;
+  if(q.x) return P.length===1&&P[0].type===q.x;
+  return P.filter(g=>g.type==='trio').length===q.t&&P.filter(g=>g.type==='escala').length===q.e;
+}
+const ERR={
+  trio:'Un trío son 3 o más cartas del mismo número, con máximo un comodín.',
+  escala:'Una escala son 4 o más cartas seguidas del mismo palo, con máximo un comodín.',
+  sucia:'La escala sucia son las 13 cartas de A a K (palos mezclados), sin comodines.',
+  real:'La escala real son las 13 cartas de A a K del mismo palo, sin comodines.'
+};
+function formGroup(type){
+  const p=me(), q=req();
+  if(!myTurn()) return say('Espera tu turno.');
+  if(G.phase!=='play') return say('Primero roba una carta.');
+  if(p.down) return say('Ya te bajaste en esta ronda.');
+  const cs=selCards(); if(!cs.length) return say('Selecciona las cartas del juego.');
+  const have=G.pending.filter(g=>g.type===type).length;
+  if(!q.x){ const need=type==='trio'?q.t:q.e; if(have>=need) return say(need?`Esta ronda pide ${need===1?'solo un':need} ${type==='trio'?(need===1?'trío':'tríos'):(need===1?'escala':'escalas')}.`:`Esta ronda no lleva ${type==='trio'?'tríos':'escalas'}.`); }
+  else if(G.pending.length) return say('Ya armaste la escala de esta ronda.');
+  const v=validate(type,cs); if(!v) return say(ERR[type]);
+  if(type==='trio'&&cs.length!==3) return say('Al bajarte, cada trío va con 3 cartas exactas. Las demás las puedes agregar desde tu próximo turno.');
+  if(type==='escala'&&cs.length!==4) return say('Al bajarte, cada escala va con 4 cartas exactas. Las demás las puedes agregar desde tu próximo turno.');
+  G.pending.push({type,cards:v}); G.sel=[];
+  say(pendingReady()?'Listo: toca “Bajarse”.':`${typeName(type)[0].toUpperCase()+typeName(type).slice(1)} armad${type==='trio'?'o':'a'}.`,true);
+}
+function act(a,el){
+  if(a==='rules') return;
+  if(!G){
+    if(a==='bots'){ setup.bots=+el.dataset.n; return renderStart(); }
+    if(a==='start'){ newGame(); return; }
+    if(a==='resume'){ const s=load(); if(s){ G=s; flash=null; go(); } return; }
+    return;
+  }
+  flash=null;
+  const p=me(), q=req();
+  switch(a){
+    case 'sel':{
+      const id=+el.dataset.id;
+      G.sel=G.sel.includes(id)?G.sel.filter(x=>x!==id):[...G.sel,id];
+      break; }
+    case 'draw': case 'take':{
+      if(!myTurn()) { say('Espera tu turno.'); break; }
+      if(G.phase!=='draw'){ say('Ya robaste en este turno.'); break; }
+      const c=drawFrom(p,a==='take'?'pozo':'mazo');
+      if(c){ addLog(a==='take'?`Tomaste ${cardTxt(c)} del pozo.`:`Robaste ${cardTxt(c)}.`); say(a==='take'?`Tomaste ${cardTxt(c)}.`:`Robaste ${cardTxt(c)}.`,true); }
+      break; }
+    case 'trio': case 'escala': case 'sucia': case 'real': formGroup(a); break;
+    case 'undo': G.pending=[]; break;
+    case 'help':{
+      if(!myTurn()||G.phase!=='play'){ say('Primero roba una carta.'); break; }
+      const g=findLayDown(p.hand,q);
+      if(g){ G.pending=g; G.sel=[]; say('Esta es una bajada posible. Revísala y toca “Bajarse”, o “Deshacer”.',true); }
+      else say(`Todavía no tienes ${reqLabel(q).toLowerCase()} en la mano.`);
+      break; }
+    case 'down':{
+      if(!canLay()){ say('En la primera vuelta nadie se puede bajar.'); break; }
+      if(!pendingReady()){ say(`Para bajarte necesitas ${reqLabel(q).toLowerCase()}.`); break; }
+      layDown(p,G.pending.map(g=>({type:g.type,cards:g.cards})));
+      addLog(`Te bajaste con ${G.pending.map(g=>typeName(g.type)).join(', ')}.`);
+      G.pending=[]; G.sel=[];
+      if(!p.hand.length) return endRound(0);
+      say('¡Te bajaste! Ahora puedes agregar cartas a la mesa o botar.',true);
+      break; }
+    case 'meld':{
+      if(!myTurn()||G.phase!=='play') { say(G.phase==='draw'&&G.turn===0?'Primero roba una carta.':'Espera tu turno.'); break; }
+      if(!p.down){ say('Para agregar a la mesa primero tienes que bajarte.'); break; }
+      const cs=selCards(); if(!cs.length){ say('Selecciona las cartas que quieres agregar y luego toca el juego.'); break; }
+      const m=G.melds[+el.dataset.i];
+      if(m.type!=='trio'&&m.type!=='escala'){ say('A ese juego no se le pueden agregar cartas.'); break; }
+      if(G.justDown){ say('Recién te bajaste: podrás agregar cartas a la mesa desde tu próximo turno.'); break; }
+      const v=validate(m.type,[...m.cards,...cs]);
+      if(!v){ say('Esas cartas no calzan en ese juego.'); break; }
+      m.cards=v; cs.forEach(c=>removeCard(p,c.id)); G.sel=[];
+      addLog(`Agregaste ${cs.map(cardTxt).join(', ')} a la mesa.`);
+      if(!p.hand.length) return endRound(0);
+      break; }
+    case 'discard':{
+      if(!myTurn()||G.phase!=='play'){ say('Primero roba una carta.'); break; }
+      if(G.sel.length!==1){ say('Selecciona una sola carta para botar.'); break; }
+      G.pending=[];
+      const c=p.hand.find(x=>x.id===G.sel[0]);
+      if(c.id===G.takenId&&p.hand.length>1){ say('No puedes botar la misma carta que tomaste del pozo.'); break; }
+      discardCard(p,c); addLog(`Botaste ${cardTxt(c)}.`);
+      if(!p.hand.length) return endRound(0);
+      nextTurn(); return; }
+    case 'sortR': G.sortMode='rank'; sortHand(p,'rank'); break;
+    case 'sortS': G.sortMode='suit'; sortHand(p,'suit'); break;
+    case 'next': nextRound(); return;
+    case 'again': clearTimeout(timer); setup.bots=G.players.length-1; setup.name=G.players[0].name; newGame(); return;
+    case 'menu': clearTimeout(timer); save(); G=null; flash=null; renderStart(); return;
+  }
+  render();
+}
+
+/* ---------- guardado ---------- */
+function save(){ try{ if(G) localStorage.setItem(KEY,JSON.stringify(G)); }catch(e){} }
+function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); return s&&s.players&&s.phase!=='gameEnd'?s:null; }catch(e){ return null; } }
+
+/* ---------- render ---------- */
+function mini(c){
+  if(c.j) return `<span class="mini jk" aria-label="comodín">★</span>`;
+  return `<span class="mini ${RED.has(c.s)?'red':''}">${rn(c.r)}<span>${sym(c.s)}</span></span>`;
+}
+function bigCard(c,extra='',attrs='',plain=false){
+  const tag=plain?'span':'button';
+  if(c.j) return `<${tag} class="card joker ${extra}" ${attrs} aria-label="comodín"><span class="r">JK</span><span class="s2">★</span></${tag}>`;
+  return `<${tag} class="card ${RED.has(c.s)?'red':''} ${extra}" ${attrs} aria-label="${rn(c.r)} ${c.s}"><span class="r">${rn(c.r)}</span><span class="s1">${sym(c.s)}</span><span class="s2">${sym(c.s)}</span></${tag}>`;
+}
+function renderStart(){
+  const saved=load();
+  $app.innerHTML=`<section class="start">
+    <p class="lede">El carioca de la once, contra bots. Diez rondas, dos barajas y cuatro comodines; gana quien termine con menos puntos.</p>
+    ${saved?`<button class="btn primary" data-act="resume">Continuar partida (ronda ${saved.round+1} de 10)</button>`:''}
+    <div class="field"><label class="lbl" for="name">Tu nombre</label>
+      <input type="text" id="name" maxlength="16" placeholder="Tú" value="${esc(setup.name)}"></div>
+    <div class="field"><span class="lbl">Rivales</span>
+      <div class="seg">${[1,2,3,4].map(n=>`<button class="btn small" data-act="bots" data-n="${n}" aria-pressed="${setup.bots===n}">${n} ${n>1?'rivales':'rival'}</button>`).join('')}</div>
+      <span class="lede" style="font-size:13px">Los nombres se sortean en cada partida.</span></div>
+    <button class="btn ${saved?'':'primary'}" data-act="start">${saved?'Empezar partida nueva':'Repartir'}</button>
+    <div class="field"><span class="lbl">Rondas</span>
+      <ol class="rounds">${ROUNDS.map(q=>`<li>${reqLabel(q)}</li>`).join('')}</ol></div>
+  </section>`;
+}
+function render(){
+  if(!G) return renderStart();
+  save();
+  const p=me(), q=req(), mine=myTurn(), play=mine&&G.phase==='play';
+  const pIds=pendingIds();
+  const sel=selCards();
+  const top=G.discard[G.discard.length-1];
+
+  const rivals=G.players.slice(1).map((r,i)=>`<div class="rival ${G.turn===i+1&&G.phase!=='roundEnd'&&G.phase!=='gameEnd'?'on':''}">
+      <div class="rn">${esc(r.name)}</div>
+      <div class="rm"><span>${r.hand.length} cartas</span>${r.down?'<span class="pill">Bajado</span>':''}</div>
+      <div class="rm">${total(r)} pts</div></div>`).join('');
+
+  let mesa='';
+  if(!G.melds.length) mesa='<div class="empty">Nadie se ha bajado todavía.</div>';
+  else G.players.forEach((pl,oi)=>{
+    const ms=G.melds.map((m,i)=>({m,i})).filter(o=>o.m.owner===oi);
+    if(!ms.length) return;
+    mesa+=`<div><div class="mowner">${esc(oi===0?'Tus juegos':pl.name)}</div><div class="mrow">${ms.map(({m,i})=>{
+      const target=play&&p.down&&sel.length&&!G.justDown&&(m.type==='trio'||m.type==='escala')&&validate(m.type,[...m.cards,...sel]);
+      return `<button class="meld ${target?'target':''}" data-act="meld" data-i="${i}" aria-label="${typeName(m.type)}">${m.cards.map(mini).join('')}</button>`;
+    }).join('')}</div></div>`;
+  });
+
+  let status;
+  if(G.turn!==0) status=`${esc(cur().name)} está jugando…`;
+  else if(G.phase==='draw') status='Tu turno: roba del mazo o toma la carta del pozo.';
+  else if(!canLay()) status='Primera vuelta: todavía nadie se puede bajar. Bota una carta.';
+  else if(!p.down) status=`Arma ${reqLabel(q).toLowerCase()} para bajarte, o bota una carta.`;
+  else if(G.justDown) status='Te bajaste. Desde tu próximo turno podrás agregar cartas a la mesa; ahora bota una carta.';
+  else status='Selecciona cartas y toca un juego de la mesa para agregarlas, o bota una carta.';
+  if(flash) status+=`<span class="flash ${flash.ok?'ok':''}">${esc(flash.t)}</span>`;
+
+  const pending=G.pending.length?`<div class="pending">${G.pending.map(g=>`<div class="pg"><span class="pt">${typeName(g.type)}</span><span style="display:flex">${g.cards.map(mini).join('')}</span></div>`).join('')}</div>`:'';
+
+  const hand=p.hand.filter(c=>!pIds.has(c.id));
+  const handHtml=hand.map(c=>bigCard(c,`${G.sel.includes(c.id)?'sel':''} ${c.id===G.drawnId&&G.turn===0?'new':''}`,`data-act="sel" data-id="${c.id}" aria-pressed="${G.sel.includes(c.id)}"`)).join('');
+
+  let btns='';
+  if(!p.down){
+    btns+=q.x?`<button class="btn" data-act="${q.x}" ${play?'':'disabled'}>${q.x==='sucia'?'Escala sucia':'Escala real'}</button>`
+      :`${q.t?`<button class="btn" data-act="trio" ${play?'':'disabled'}>Trío</button>`:''}${q.e?`<button class="btn" data-act="escala" ${play?'':'disabled'}>Escala</button>`:''}`;
+    if(G.pending.length) btns+=`<button class="btn ghost" data-act="undo">Deshacer</button>`;
+    else btns+=`<button class="btn ghost" data-act="help" ${play?'':'disabled'}>Ayuda</button>`;
+    btns+=`<button class="btn primary" data-act="down" ${play&&canLay()&&pendingReady()?'':'disabled'}>Bajarse</button>`;
+  }
+  btns+=`<button class="btn" data-act="discard" ${play&&G.sel.length===1?'':'disabled'}>Botar</button>`;
+
+  let overlay='';
+  if(G.phase==='roundEnd'||G.phase==='gameEnd'){
+    const end=G.phase==='gameEnd';
+    const totals=G.players.map(pl=>total(pl)); const min=Math.min(...totals);
+    const winners=G.players.filter(pl=>total(pl)===min).map(pl=>pl.name);
+    const rows=G.players.map(pl=>`<tr class="${end&&total(pl)===min?'best':''}"><td>${esc(pl.name)}</td><td>${pl.scores[pl.scores.length-1]}</td><td>${total(pl)}</td></tr>`).join('');
+    overlay=`<div class="overlay" role="dialog" aria-modal="true"><div class="sheet">
+      <h2>${end?(winners.length>1?'Empate':(winners[0]===p.name&&!G.players[0].bot?'¡Ganaste!':`Ganó ${esc(winners[0])}`)):`Ronda ${G.round+1} cerrada`}</h2>
+      <p>${end?`${winners.map(esc).join(' y ')} terminó con ${min} puntos.`:`${esc(G.players[G.winner].name)} se quedó sin cartas.`}</p>
+      <table><thead><tr><th>Jugador</th><th>Ronda</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>
+      ${end?`<button class="btn primary" data-act="again">Jugar otra vez</button>`:`<button class="btn primary" data-act="next">Siguiente: ${reqLabel(ROUNDS[G.round+1])}</button>`}
+    </div></div>`;
+  }
+
+  $app.innerHTML=`
+    <div class="wrap" style="padding:0">
+      <div class="topline">
+        <div class="round">Ronda ${G.round+1}<span> / 10</span></div>
+        <div style="display:flex;gap:8px;align-items:center"><span class="req">${reqLabel(q)}</span><button class="btn ghost small" data-act="menu">Menú</button></div>
+      </div>
+      <div class="rivals">${rivals}</div>
+      <section class="mesa" aria-label="Mesa">${mesa}</section>
+      <div class="center">
+        <button class="pile ${mine&&G.phase==='draw'?'live':''}" data-act="draw" ${mine&&G.phase==='draw'?'':'disabled'} aria-label="Robar del mazo"><span class="back"></span>Mazo · ${G.deck.length}</button>
+        <button class="pile ${mine&&G.phase==='draw'&&top?'live':''}" data-act="take" ${mine&&G.phase==='draw'&&top?'':'disabled'} aria-label="Tomar del pozo">${top?bigCard(top,'','',true):'<span class="slot"></span>'}Pozo</button>
+        <div class="status" aria-live="polite">${status}</div>
+      </div>
+      ${pending}
+      <div class="handhead"><span>Tu mano · <b>${p.hand.length}</b> cartas · <b>${handPts(p)}</b> pts · total <b>${total(p)}</b></span>
+        <span class="sorts">Ordenar <button class="btn ghost small" data-act="sortR">Número</button><button class="btn ghost small" data-act="sortS">Palo</button></span></div>
+      <div class="hand">${handHtml}</div>
+      <div class="actions">${btns}</div>
+      <ol class="log">${G.log.slice(0,4).map(l=>`<li>${esc(l)}</li>`).join('')}</ol>
+    </div>${overlay}`;
+}
+
+/* ---------- eventos ---------- */
+$app.addEventListener('click',e=>{ const t=e.target.closest('[data-act]'); if(!t||t.disabled) return; act(t.dataset.act,t); });
+$app.addEventListener('input',e=>{ if(e.target.id==='name') setup.name=e.target.value; });
+const rb=document.getElementById('rulesBtn'), rp=document.getElementById('rules');
+rb.addEventListener('click',()=>{ rp.hidden=!rp.hidden; rb.setAttribute('aria-expanded',String(!rp.hidden)); });
+
+renderStart();
+</script>
+
+<script>
+if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+</script>
+</body>
+</html>
